@@ -8,11 +8,13 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((50, 50))
         self.image.fill((120, 12, 55))
         self.rect = self.image.get_rect()
-        self.rect.center = (20, 20)
+        self.rect.x = 5
+        self.rect.y = 5
         self.up = False
         self.down = False
         self.left = False
         self.right = True
+        self.speed = 5
         self.border_change = 10
         self.top_border = 0
         self.bottom_border = HEIGHT
@@ -22,41 +24,37 @@ class Player(pygame.sprite.Sprite):
     def colour_change(self):
         self.image.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
 
-    def direction_change(self, right, left, up, down):
+    def direction_change(self, right, down, left, up):
         self.right = right
         self.left = left
         self.up = up
         self.down = down
 
     def update(self):
-        if self.rect.bottom > self.bottom_border and self.rect.right > self.right_border:
-            self.direction_change(False, True, False, False)
-
-        if self.rect.top < self.top_border and self.rect.left < self.left_border:
-            self.direction_change(True, False, False, False)
-
-        if self.rect.right > self.right_border and self.rect.top < self.top_border:
-            self.direction_change(False, False, False, True)
-
-        if self.rect.left < self.left_border and self.rect.bottom > self.bottom_border:
-            self.direction_change(False, False, True, False)
-
-
         if self.left:
-            self.rect.x -= 5
+            self.rect.x -= self.speed
         if self.right:
-            self.rect.x += 5
-
+            self.rect.x += self.speed
         if self.up:
-            self.rect.y -= 5
+            self.rect.y -= self.speed
         if self.down:
-            self.rect.y += 5
+            self.rect.y += self.speed
 
-        # if self.border < WIDTH // 2 and self.border < HEIGHT // 2 and self.loop % 8 == 0:
-        #     self.border += 30
-        #
-        # else:
-        #     self.border = self.border
+        if self.rect.right + 5 > self.right_border:
+            self.direction_change(False, True, False, False)
+            return
+
+        if self.rect.bottom + 5 > self.bottom_border:
+            self.direction_change(False, False, True, False)
+            return
+
+        if self.rect.left - 5 < self.left_border:
+            self.direction_change(False, False, False, True)
+            return
+
+        if self.rect.top - 5 < self.top_border:
+            self.direction_change(True, False, False, False)
+            return
 
 
 WIDTH = 450
