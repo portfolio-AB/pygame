@@ -14,7 +14,7 @@ class Player(pygame.sprite.Sprite):
         self.down = False
         self.left = False
         self.right = True
-        self.speed = 5
+        self.speed = 15
         self.border_change = 30
         self.top_border = 0
         self.bottom_border = HEIGHT
