@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
         self.left = False
         self.right = True
         self.speed = 5
-        self.border_change = 10
+        self.border_change = 30
         self.top_border = 0
         self.bottom_border = HEIGHT
         self.left_border = 0
@@ -31,30 +31,36 @@ class Player(pygame.sprite.Sprite):
         self.down = down
 
     def update(self):
+        if self.bottom_border - self.top_border <= 0 or self. right_border-self.left_border <= 0:
+            return
+
         if self.left:
             self.rect.x -= self.speed
+            if self.rect.left <= self.left_border:
+                self.direction_change(False, False, False, True)
+                self.left_border += self.border_change
+                return
+
         if self.right:
             self.rect.x += self.speed
+            if self.rect.right >= self.right_border:
+                self.direction_change(False, True, False, False)
+                self.right_border -= self.border_change
+                return
+
         if self.up:
             self.rect.y -= self.speed
+            if self.rect.top <= self.top_border:
+                self.direction_change(True, False, False, False)
+                self.top_border += self.border_change
+                return
+
         if self.down:
             self.rect.y += self.speed
-
-        if self.rect.right + 5 > self.right_border:
-            self.direction_change(False, True, False, False)
-            return
-
-        if self.rect.bottom + 5 > self.bottom_border:
-            self.direction_change(False, False, True, False)
-            return
-
-        if self.rect.left - 5 < self.left_border:
-            self.direction_change(False, False, False, True)
-            return
-
-        if self.rect.top - 5 < self.top_border:
-            self.direction_change(True, False, False, False)
-            return
+            if self.rect.bottom >= self.bottom_border:
+                self.direction_change(False, False, True, False)
+                self.bottom_border -= self.border_change
+                return
 
 
 WIDTH = 450
