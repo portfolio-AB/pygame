@@ -14,12 +14,14 @@ class Player(pygame.sprite.Sprite):
         self.down = False
         self.left = False
         self.right = True
-        self.speed = 15
+        self.speed = 20
         self.border_change = 30
         self.top_border = 0
         self.bottom_border = HEIGHT
         self.left_border = 0
         self.right_border = WIDTH
+
+    #  this is an experiment
 
     def colour_change(self):
         self.image.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
@@ -31,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.down = down
 
     def update(self):
-        if self.bottom_border - self.top_border <= 0 or self. right_border-self.left_border <= 0:
+        if self.bottom_border - self.top_border <= 0 or self.right_border - self.left_border <= 0:
             return
 
         if self.left:
