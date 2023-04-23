@@ -8,6 +8,7 @@ FPS = 60
 HEIGHT = 900
 WIDTH = 450
 BLACK = (0, 0, 0)
+WHITE = (250, 250, 250)
 score = 0
 
 pygame.init()
@@ -16,6 +17,7 @@ pygame.display.set_caption("test game")
 clock = pygame.time.Clock()
 
 img_dir = path.join(path.dirname(__file__), "img")
+snd_dir = path.join(path.dirname(__file__), "snd")
 
 
 class Player(pygame.sprite.Sprite):
@@ -51,6 +53,7 @@ class Player(pygame.sprite.Sprite):
         projectile = Projectile(self.rect.centerx, self.rect.top)
         projectiles.add(projectile)
         sprites.add(projectile)
+        shoot_snd.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -119,6 +122,17 @@ class Projectile(pygame.sprite.Sprite):
             self.kill()
 
 
+font_name = pygame.font.match_font("arial")
+
+
+def draw_text(surface, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surface.blit(text_surface, text_rect)
+
+
 bg = pygame.image.load(path.join(img_dir, "darkPurple.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 bg_rect = bg.get_rect()
@@ -126,8 +140,7 @@ bg_rect = bg.get_rect()
 meteor_images_l = []
 meteor_images_ms = []
 meteor_list_l = ["meteorGrey_big1.png", "meteorGrey_big4.png"]
-meteor_list_ms = ["meteorGrey_small1.png", "meteorGrey_med2.png",
-                  "meteorGrey_tiny2.png"]
+meteor_list_ms = ["meteorGrey_small1.png", "meteorGrey_med2.png", "meteorGrey_med2.png", "meteorGrey_tiny2.png"]
 asteroids = [meteor_images_l, meteor_images_ms]
 
 for i in meteor_list_l:
@@ -138,6 +151,17 @@ for i in meteor_list_ms:
 player_img = pygame.image.load(path.join(img_dir, "playerShip1_red.png")).convert()
 mob_img = pygame.image.load(path.join(img_dir, "meteorGrey_small1.png")).convert()
 projectile_img = pygame.image.load(path.join(img_dir, "laserRed01.png")).convert()
+
+shoot_snd = pygame.mixer.Sound(path.join(snd_dir, "lazer.wav"))
+big_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit big.wav"))
+small_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit small.wav"))
+tiny_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit tiny.wav"))
+
+pygame.mixer.music.load(path.join(snd_dir,"BossMain.wav"))
+pygame.mixer.music.play(-1)
+
+
+
 
 sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
@@ -154,7 +178,7 @@ while running:
     clock.tick(FPS)
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or score >= 10:
+        if event.type == pygame.QUIT or score >= 150:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -172,23 +196,24 @@ while running:
         running = False
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, True, True)
     for i in group_hits:
-        if i.radius < 10:
-            score += 4
-        elif 10 <= i.radius < 40:
-            score += 2
-        elif i.radius >= 40:
-            score += 1
+        score += 50 - i.radius
+
+        if i.radius <=10:
+            tiny_target_snd.play()
+        elif 10< i.radius <=20:
+            small_target_snd.play()
+        else:
+            big_target_snd.play()
+
         mob = Mob()
         mobs.add(mob)
         sprites.add(mob)
-
-        print(score)
-
 
     screen.fill(BLACK)
     screen.blit(bg, bg_rect)
 
     sprites.draw(screen)
+    draw_text(screen, str(score), 20, WIDTH // 2, 20)
     pygame.display.flip()
 
 pygame.quit()
