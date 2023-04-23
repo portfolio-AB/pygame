@@ -9,6 +9,8 @@ HEIGHT = 900
 WIDTH = 450
 BLACK = (0, 0, 0)
 WHITE = (250, 250, 250)
+BAR_LENGTH = 400
+BAR_HEIGHT = 5
 score = 0
 
 pygame.init()
@@ -28,9 +30,10 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.radius = int(0.9 * self.rect.width / 2)
         # pygame.draw.circle(self.image, (250, 250, 250), self.rect.center, self.radius)
-        self.rect.center = (WIDTH / 2, HEIGHT - 50)
+        self.rect.center = (WIDTH / 2, HEIGHT - 100 )
         self.speed_x = 0
         self.rot = 0
+        self.sheild_health = 100
 
     def colour_change(self):
         self.image.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
@@ -133,6 +136,26 @@ def draw_text(surface, text, size, x, y):
     surface.blit(text_surface, text_rect)
 
 
+def new_mob():
+    mob = Mob()
+    mobs.add(mob)
+    sprites.add(mob)
+
+
+def draw_shield_bar(surf, x, y, pct):
+    if pct < 0:
+        pct = 0
+    bar_fullness = (pct / 100) * BAR_LENGTH
+    outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pygame.Rect(x, y, bar_fullness, BAR_HEIGHT)
+
+    fill_rect.center = (x, y)
+    outline_rect.center = (x, y)
+
+    pygame.draw.rect(surf, WHITE, outline_rect)
+    pygame.draw.rect(surf, (175, 35, 100), fill_rect)
+
+
 bg = pygame.image.load(path.join(img_dir, "darkPurple.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 bg_rect = bg.get_rect()
@@ -157,21 +180,17 @@ big_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit big.wav"))
 small_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit small.wav"))
 tiny_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit tiny.wav"))
 
-pygame.mixer.music.load(path.join(snd_dir,"BossMain.wav"))
+pygame.mixer.music.load(path.join(snd_dir, "BossMain.wav"))
 pygame.mixer.music.play(-1)
-
-
-
 
 sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
 projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
+
 for i in range(8):
-    mob = Mob()
-    mobs.add(mob)
-    sprites.add(mob)
+    new_mob()
 
 running = True
 while running:
@@ -191,29 +210,35 @@ while running:
     sprites.update()
     mobs.update()
     projectiles.update()
-    hits = pygame.sprite.spritecollide(player, mobs, False, pygame.sprite.collide_circle)
-    if hits:
-        running = False
+
+    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
+    for hit in hits:
+        player.sheild_health -= hit.radius
+        print(hit.radius, player.sheild_health)
+        if player.sheild_health <= 0:
+            running = False
+
+        new_mob()
+
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, True, True)
     for i in group_hits:
         score += 50 - i.radius
 
-        if i.radius <=10:
+        if i.radius <= 10:
             tiny_target_snd.play()
-        elif 10< i.radius <=20:
+        elif 10 < i.radius <= 20:
             small_target_snd.play()
         else:
             big_target_snd.play()
 
-        mob = Mob()
-        mobs.add(mob)
-        sprites.add(mob)
+        new_mob()
 
     screen.fill(BLACK)
     screen.blit(bg, bg_rect)
 
     sprites.draw(screen)
     draw_text(screen, str(score), 20, WIDTH // 2, 20)
+    draw_shield_bar(screen, WIDTH // 2, 50, player.sheild_health)
     pygame.display.flip()
 
 pygame.quit()
