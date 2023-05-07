@@ -1,4 +1,6 @@
 import random
+import time
+from threading import Timer
 
 import pygame
 from os import path
@@ -20,6 +22,7 @@ clock = pygame.time.Clock()
 
 img_dir = path.join(path.dirname(__file__), "img")
 snd_dir = path.join(path.dirname(__file__), "snd")
+exp_dir = path.join(img_dir, "explosion_anim")
 
 
 class Player(pygame.sprite.Sprite):
@@ -30,10 +33,12 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.radius = int(0.9 * self.rect.width / 2)
         # pygame.draw.circle(self.image, (250, 250, 250), self.rect.center, self.radius)
-        self.rect.center = (WIDTH / 2, HEIGHT - 100 )
+        self.rect.center = (WIDTH / 2, HEIGHT - 100)
         self.speed_x = 0
         self.rot = 0
         self.sheild_health = 100
+        self.shoot_delay = 250
+        self.last_shot = pygame.time.get_ticks()
 
     def colour_change(self):
         self.image.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
@@ -45,6 +50,8 @@ class Player(pygame.sprite.Sprite):
             self.speed_x = -10
         if key_state[pygame.K_RIGHT]:
             self.speed_x = 10
+        if key_state[pygame.K_SPACE]:
+            self.shoot()
 
         self.rect.x += self.speed_x
         if self.rect.right < 0:
@@ -53,10 +60,14 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = 0
 
     def shoot(self):
-        projectile = Projectile(self.rect.centerx, self.rect.top)
-        projectiles.add(projectile)
-        sprites.add(projectile)
-        shoot_snd.play()
+        now = pygame.time.get_ticks()
+
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
+            projectile = Projectile(self.rect.centerx, self.rect.top)
+            projectiles.add(projectile)
+            sprites.add(projectile)
+            shoot_snd.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -125,7 +136,37 @@ class Projectile(pygame.sprite.Sprite):
             self.kill()
 
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, centre, size):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = explosion_anim[size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = centre
+        self.frame = 0
+        self.last_update = pygame.time.get_ticks()
+        self.frame_rate = 45
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame >= len(explosion_anim[self.size]):
+                self.kill()
+            else:
+                centre = self.rect.center
+                self.image = explosion_anim[self.size][self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = centre
+
+
 font_name = pygame.font.match_font("arial")
+
+
+def stop_game():
+    global running
+    running = False
 
 
 def draw_text(surface, text, size, x, y):
@@ -189,7 +230,17 @@ projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
 
-for i in range(8):
+explosion_anim = {"lrg": [], "small": []}
+for i in range(9):
+    file_name = "regularExplosion0{}.png".format(i)
+    image = pygame.image.load(path.join(exp_dir, file_name)).convert()
+    image.set_colorkey(BLACK)
+    img_lrg = pygame.transform.scale(image, (75, 75))
+    explosion_anim["lrg"].append(img_lrg)
+    img_small = pygame.transform.scale(image, (30, 30))
+    explosion_anim["small"].append(img_small)
+
+for _ in range(8):
     new_mob()
 
 running = True
@@ -204,8 +255,6 @@ while running:
                 player.speed_x = -10
             if event.key == pygame.K_RIGHT:
                 player.speed_x = 10
-            if event.key == pygame.K_SPACE:
-                player.shoot()
 
     sprites.update()
     mobs.update()
@@ -214,23 +263,33 @@ while running:
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in hits:
         player.sheild_health -= hit.radius
-        print(hit.radius, player.sheild_health)
+        explosion = Explosion(hit.rect.center, "small")
+        sprites.add(explosion)
         if player.sheild_health <= 0:
-            running = False
+            explosion = Explosion(player.rect.center, "lrg")
+            sprites.add(explosion)
+            player.kill()
+
+            t = Timer(1, stop_game)
+            t.start()
 
         new_mob()
 
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, True, True)
     for i in group_hits:
         score += 50 - i.radius
+        size = "small"
 
         if i.radius <= 10:
             tiny_target_snd.play()
         elif 10 < i.radius <= 20:
             small_target_snd.play()
         else:
+            size = "lrg"
             big_target_snd.play()
 
+        explosion = Explosion(i.rect.center, size)
+        sprites.add(explosion)
         new_mob()
 
     screen.fill(BLACK)
