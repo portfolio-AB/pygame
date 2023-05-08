@@ -3,6 +3,7 @@ from os import path
 from random import randrange
 from threading import Timer
 from player import Player
+from projectile import Projectile
 
 import pygame
 
@@ -23,6 +24,17 @@ clock = pygame.time.Clock()
 img_dir = path.join(path.dirname(__file__), "img")
 snd_dir = path.join(path.dirname(__file__), "snd")
 exp_dir = path.join(img_dir, "explosion_anim")
+
+
+def shoot(pl):
+    now = pygame.time.get_ticks()
+
+    if now - pl.last_shot > pl.shoot_delay:
+        pl.last_shot = now
+        projectile = Projectile(pl.rect.centerx, pl.rect.top)
+        projectiles.add(projectile)
+        sprites.add(projectile)
+        shoot_snd.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -191,6 +203,8 @@ while running:
                 player.speed_x = -10
             if event.key == pygame.K_RIGHT:
                 player.speed_x = 10
+            if event.key == pygame.K_SPACE:
+                shoot(player)
 
     sprites.update()
     mobs.update()

@@ -1,23 +1,15 @@
 import pygame
 from os import path
-from projectile import Projectile
 
 HEIGHT = 900
 WIDTH = 450
 BLACK = (0, 0, 0)
-WHITE = (250, 250, 250)
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 img_dir = path.join(path.dirname(__file__), "img")
-snd_dir = path.join(path.dirname(__file__), "snd")
 player_img = pygame.image.load(path.join(img_dir, "playerShip1_red.png")).convert()
-shoot_snd = pygame.mixer.Sound(path.join(snd_dir, "lazer.wav"))
-
-sprites = pygame.sprite.Group()
-projectiles = pygame.sprite.Group()
-mobs = pygame.sprite.Group()
 
 
 class Player(pygame.sprite.Sprite):
@@ -41,8 +33,8 @@ class Player(pygame.sprite.Sprite):
             self.speed_x = -10
         if key_state[pygame.K_RIGHT]:
             self.speed_x = 10
-        if key_state[pygame.K_SPACE]:
-            self.shoot()
+        # if key_state[pygame.K_SPACE]:
+        #     shoot()
 
         self.rect.x += self.speed_x
         if self.rect.right < 0:
@@ -50,12 +42,3 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left > WIDTH:
             self.rect.right = 0
 
-    def shoot(self):
-        now = pygame.time.get_ticks()
-
-        if now - self.last_shot > self.shoot_delay:
-            self.last_shot = now
-            projectile = Projectile(self.rect.centerx, self.rect.top)
-            projectiles.add(projectile)
-            sprites.add(projectile)
-            shoot_snd.play()

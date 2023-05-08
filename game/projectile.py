@@ -1,7 +1,6 @@
 import pygame
 from os import path
 
-
 HEIGHT = 900
 WIDTH = 450
 BLACK = (0, 0, 0)
@@ -12,8 +11,6 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 img_dir = path.join(path.dirname(__file__), "img")
 projectile_img = pygame.image.load(path.join(img_dir, "laserRed01.png")).convert()
-
-
 
 
 class Projectile(pygame.sprite.Sprite):
