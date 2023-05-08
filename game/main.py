@@ -1,10 +1,10 @@
 import random
-import time
+from os import path
+from random import randrange
 from threading import Timer
+from player import Player
 
 import pygame
-from os import path
-from random import randint, randrange
 
 FPS = 60
 HEIGHT = 900
@@ -25,51 +25,6 @@ snd_dir = path.join(path.dirname(__file__), "snd")
 exp_dir = path.join(img_dir, "explosion_anim")
 
 
-class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(player_img, (50, 40))
-        self.image.set_colorkey(BLACK)
-        self.rect = self.image.get_rect()
-        self.radius = int(0.9 * self.rect.width / 2)
-        # pygame.draw.circle(self.image, (250, 250, 250), self.rect.center, self.radius)
-        self.rect.center = (WIDTH / 2, HEIGHT - 100)
-        self.speed_x = 0
-        self.rot = 0
-        self.sheild_health = 100
-        self.shoot_delay = 250
-        self.last_shot = pygame.time.get_ticks()
-
-    def colour_change(self):
-        self.image.fill((randint(0, 255), randint(0, 255), randint(0, 255)))
-
-    def update(self):
-        self.speed_x = 0
-        key_state = pygame.key.get_pressed()
-        if key_state[pygame.K_LEFT]:
-            self.speed_x = -10
-        if key_state[pygame.K_RIGHT]:
-            self.speed_x = 10
-        if key_state[pygame.K_SPACE]:
-            self.shoot()
-
-        self.rect.x += self.speed_x
-        if self.rect.right < 0:
-            self.rect.left = WIDTH
-        if self.rect.left > WIDTH:
-            self.rect.right = 0
-
-    def shoot(self):
-        now = pygame.time.get_ticks()
-
-        if now - self.last_shot > self.shoot_delay:
-            self.last_shot = now
-            projectile = Projectile(self.rect.centerx, self.rect.top)
-            projectiles.add(projectile)
-            sprites.add(projectile)
-            shoot_snd.play()
-
-
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -81,7 +36,6 @@ class Mob(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.radius = int(0.9 * self.rect.width / 2)
-        # pygame.draw.circle(self.image, (250, 250, 250), self.rect.center, self.radius)
         self.rect.x = randrange(WIDTH - self.rect.width)
         self.rect.y = randrange(-100, -30)
         if self.random_size == meteor_images_l:
@@ -116,24 +70,6 @@ class Mob(pygame.sprite.Sprite):
             self.image = new_image
             self.rect = self.image.get_rect()
             self.rect.center = old_centre
-
-
-class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10, 25))
-        self.image.set_colorkey(BLACK)
-        self.image = projectile_img
-        self.rect = self.image.get_rect()
-        self.speed_y = -15
-        self.rect.bottom = y
-        self.rect.centerx = x
-
-    def update(self):
-        self.rect.y += self.speed_y
-
-        if self.rect.top < 0:
-            self.kill()
 
 
 class Explosion(pygame.sprite.Sprite):
