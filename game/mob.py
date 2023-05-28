@@ -37,6 +37,7 @@ class Mob(pygame.sprite.Sprite):
         self.radius = int(0.9 * self.rect.width / 2)
         self.rect.x = randrange(WIDTH - self.rect.width)
         self.rect.y = randrange(-100, -30)
+        self.health = 75
         if self.random_size == meteor_images_l:
             self.speed_y = randrange(1, 3)
             self.speed_x = randrange(-1, 1)

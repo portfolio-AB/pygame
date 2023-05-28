@@ -141,9 +141,8 @@ while running:
 
         new_mob()
 
-    group_hits = pygame.sprite.groupcollide(mobs, projectiles, True, True)
+    group_hits = pygame.sprite.groupcollide(mobs, projectiles, False , True)
     for i in group_hits:
-        score += 50 - i.radius
         size = "small"
 
         if i.radius <= 10:
@@ -153,10 +152,14 @@ while running:
         else:
             size = "lrg"
             big_target_snd.play()
+        i.health -= 25
+        if i.health <= 0:
+            i.kill()
+            new_mob()
+            score += i.radius
 
         explosion = Explosion(i.rect.center, size)
         sprites.add(explosion)
-        new_mob()
 
     screen.fill(BLACK)
     screen.blit(bg, bg_rect)
