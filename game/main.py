@@ -1,3 +1,4 @@
+import random
 from os import path
 
 import pygame
@@ -6,6 +7,7 @@ from explosion import Explosion
 from mob import Mob
 from player import Player, player_img
 from projectile import Projectile
+from boost import Boost
 
 FPS = 60
 HEIGHT = 900
@@ -60,9 +62,15 @@ def new_mob():
 
 
 def draw_shield_bar(surf, x, y, pct):
+    extra = 0
+    full = pct
     if pct < 0:
         pct = 0
-    bar_fullness = (pct / 100) * BAR_LENGTH
+        full = 0
+    elif pct > 100:
+        full = 100
+        extra = pct - 100
+    bar_fullness = (full / 100) * BAR_LENGTH
     outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
     fill_rect = pygame.Rect(x, y, bar_fullness, BAR_HEIGHT)
 
@@ -70,8 +78,7 @@ def draw_shield_bar(surf, x, y, pct):
     outline_rect.center = (x, y)
 
     pygame.draw.rect(surf, WHITE, outline_rect)
-    pygame.draw.rect(surf, (175, 35, 100), fill_rect)
-
+    pygame.draw.rect(surf, (175 - extra, 35 + (2*extra), 100 + extra), fill_rect)
 
 def draw_lives(surf, x, y, lives, img):
     for i in range(lives):
@@ -97,6 +104,7 @@ pygame.mixer.music.load(path.join(snd_dir, "BossMain.wav"))
 pygame.mixer.music.play(-1)
 
 sprites = pygame.sprite.Group()
+boosts = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
 projectiles = pygame.sprite.Group()
 player = Player()
@@ -110,7 +118,7 @@ while running:
     clock.tick(FPS)
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or score >= 150:
+        if event.type == pygame.QUIT or score >= 1500:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -123,6 +131,16 @@ while running:
     sprites.update()
     mobs.update()
     projectiles.update()
+
+    boost_gain = pygame.sprite.spritecollide(player, boosts, True, pygame.sprite.collide_circle)
+    for b in boost_gain:
+        if b.type == "bolt":
+            pass
+        if b.type == "shield":
+            if player.lives == 3 and player.sheild_health <= 100:
+                player.sheild_health += 100
+            elif player.lives < 3:
+                player.lives += 1
 
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in hits:
@@ -141,13 +159,15 @@ while running:
 
         new_mob()
 
-    group_hits = pygame.sprite.groupcollide(mobs, projectiles, False , True)
+    group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
     for i in group_hits:
+        hit_num = random.randint(1,1)
         size = "small"
 
         if i.radius <= 10:
             tiny_target_snd.play()
         elif 10 < i.radius <= 20:
+            size = "med"
             small_target_snd.play()
         else:
             size = "lrg"
@@ -157,6 +177,10 @@ while running:
             i.kill()
             new_mob()
             score += i.radius
+            if hit_num == 1:
+                boost = Boost(i.rect.center)
+                boosts.add(boost)
+                sprites.add(boost)
 
         explosion = Explosion(i.rect.center, size)
         sprites.add(explosion)

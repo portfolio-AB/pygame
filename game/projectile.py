@@ -23,6 +23,7 @@ class Projectile(pygame.sprite.Sprite):
         self.speed_y = -15
         self.rect.bottom = y
         self.rect.centerx = x
+        self.boosted = False
 
     def update(self):
         self.rect.y += self.speed_y

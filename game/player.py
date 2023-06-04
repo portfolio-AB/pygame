@@ -28,6 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.hide_timer = pygame.time.get_ticks()
         self.lives = 3
         self.last_shot = pygame.time.get_ticks()
+        self.boosted = False
 
     def hide(self):
         self.hidden = True
