@@ -6,7 +6,7 @@ from threading import Timer
 from explosion import Explosion
 from mob import Mob
 from player import Player, player_img
-from projectile import Projectile
+from projectile import Projectile, pow_projectile_img
 from boost import Boost
 
 FPS = 60
@@ -33,9 +33,16 @@ def shoot(pl):
 
     if now - pl.last_shot > pl.shoot_delay:
         pl.last_shot = now
-        projectile = Projectile(pl.rect.centerx, pl.rect.top)
-        projectiles.add(projectile)
-        sprites.add(projectile)
+        if pl.pow_bullets > 0 and pl.bull_type == 1:
+            projectile = Projectile(pl.rect.centerx, pl.rect.top, "Blue")
+            projectiles.add(projectile)
+            sprites.add(projectile)
+            pl.pow_bullets -= 1
+        else:
+            projectile = Projectile(pl.rect.centerx, pl.rect.top)
+            projectiles.add(projectile)
+            sprites.add(projectile)
+
         shoot_snd.play()
 
 
@@ -70,15 +77,20 @@ def draw_shield_bar(surf, x, y, pct):
     elif pct > 100:
         full = 100
         extra = pct - 100
-    bar_fullness = (full / 100) * BAR_LENGTH
+    m_bar_fullness = (full / 100) * BAR_LENGTH
+    ex_bar_fullness = (extra / 100) * BAR_LENGTH
     outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
-    fill_rect = pygame.Rect(x, y, bar_fullness, BAR_HEIGHT)
+    fill_rect = pygame.Rect(x, y, m_bar_fullness, BAR_HEIGHT)
+    extra_rect = pygame.Rect(x, y, ex_bar_fullness, 0.5 * BAR_HEIGHT)
 
     fill_rect.center = (x, y)
     outline_rect.center = (x, y)
+    extra_rect.center = (x, y + 20)
 
     pygame.draw.rect(surf, WHITE, outline_rect)
-    pygame.draw.rect(surf, (175 - extra, 35 + (2*extra), 100 + extra), fill_rect)
+    pygame.draw.rect(surf, (175, 35, 100), fill_rect)
+    pygame.draw.rect(surf, (100, 235, 200), extra_rect)
+
 
 def draw_lives(surf, x, y, lives, img):
     for i in range(lives):
@@ -88,12 +100,22 @@ def draw_lives(surf, x, y, lives, img):
         surf.blit(img, life)
 
 
+def draw_ultra_bullets(surf, x, y, quant, img):
+    for i in range(quant):
+        ultra_bullet = img.get_rect()
+        ultra_bullet.y = y
+        ultra_bullet.x = x + i * 13
+        surf.blit(img, ultra_bullet)
+
+
 bg = pygame.image.load(path.join(img_dir, "darkPurple.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 bg_rect = bg.get_rect()
 
 lives_img = pygame.transform.scale(player_img, (30, 30))
 lives_img.set_colorkey(BLACK)
+pow_img = pygame.transform.scale(pow_projectile_img, (5, 10))
+pow_img.set_colorkey(BLACK)
 
 shoot_snd = pygame.mixer.Sound(path.join(snd_dir, "lazer.wav"))
 big_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit big.wav"))
@@ -127,6 +149,8 @@ while running:
                 player.speed_x = 10
             if event.key == pygame.K_SPACE:
                 shoot(player)
+            if event.key == pygame.K_x:
+                player.bull_type *= -1
 
     sprites.update()
     mobs.update()
@@ -135,24 +159,28 @@ while running:
     boost_gain = pygame.sprite.spritecollide(player, boosts, True, pygame.sprite.collide_circle)
     for b in boost_gain:
         if b.type == "bolt":
-            pass
+            if player.pow_bullets < 10:
+                player.pow_bullets += 1
         if b.type == "shield":
-            if player.lives == 3 and player.sheild_health <= 100:
-                player.sheild_health += 100
+            if player.lives == 3:
+                if player.shield_health >= 50:
+                    player.shield_health += 200 - player.shield_health
+                else:
+                    player.shield_health = 100
             elif player.lives < 3:
                 player.lives += 1
 
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in hits:
-        player.sheild_health -= hit.radius
+        player.shield_health -= hit.radius
         explosion = Explosion(hit.rect.center, "small")
         sprites.add(explosion)
-        if player.sheild_health <= 0:
+        if player.shield_health <= 0:
             explosion = Explosion(player.rect.center, "lrg")
             sprites.add(explosion)
             player.hide()
             player.lives -= 1
-            player.sheild_health = 100
+            player.shield_health = 100
         if player.lives == 0:
             t = Timer(0.90, stop_game)
             t.start()
@@ -161,7 +189,7 @@ while running:
 
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
     for i in group_hits:
-        hit_num = random.randint(1,1)
+        hit_num = random.randint(1, 1)
         size = "small"
 
         if i.radius <= 10:
@@ -172,7 +200,11 @@ while running:
         else:
             size = "lrg"
             big_target_snd.play()
-        i.health -= 25
+        for k in group_hits[i]:
+            if k.type == "Red":
+                i.health -= 25
+            else:
+                i.health -= 75
         if i.health <= 0:
             i.kill()
             new_mob()
@@ -190,8 +222,9 @@ while running:
 
     sprites.draw(screen)
     draw_text(screen, str(score), 20, WIDTH // 2, 20)
-    draw_shield_bar(screen, WIDTH - 100, 30, player.sheild_health)
+    draw_shield_bar(screen, WIDTH - 100, 30, player.shield_health)
     draw_lives(screen, 30, 20, player.lives, lives_img)
+    draw_ultra_bullets(screen, 35, 60, player.pow_bullets, pow_img)
     pygame.display.flip()
 
 pygame.quit()
