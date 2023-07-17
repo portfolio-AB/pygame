@@ -216,7 +216,7 @@ while running:
                 i.health -= 75
         if i.health <= 0:
             i.kill()
-            score += (i.radius + i.init_health) // 2
+            score += (i.radius + int(i.init_health)) // 2
             if hit_num == 1:
                 boost = Boost(i.rect.center)
                 boosts.add(boost)

@@ -33,7 +33,7 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.random_size = random.choice(asteroids)
-        self.rand_fact = randrange(7, 17) / 10
+        self.rand_fact = randrange(7, 15) / 10
         self.img_orig = random.choice(self.random_size[0])
         self.img_orig.set_colorkey(BLACK)
         width = self.img_orig.get_rect().width
@@ -46,19 +46,19 @@ class Mob(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.x = randrange(WIDTH - self.rect.width)
-        self.rect.y = randrange(-100,-50)
+        self.rect.y = randrange(-100, -50)
         if self.random_size[0] == meteor_images_l:
             self.speed_y = randrange(1, 3)
             self.speed_x = randrange(-1, 1)
-            self.init_health = randrange(75, 100)
+            self.init_health = 100 * self.rand_fact
         elif self.random_size[0] == meteor_images_m:
             self.speed_y = randrange(1, 4)
             self.speed_x = randrange(-1, 1)
-            self.init_health = randrange(45, 55)
+            self.init_health = 50 * self.rand_fact
         else:
             self.speed_y = randrange(2, 5)
             self.speed_x = randrange(-1, 1)
-            self.init_health = randrange(10, 25)
+            self.init_health = 30 * self.rand_fact
         self.health = self.init_health
         self.rot = 0
         self.rot_speed = randrange(-5, 5)
