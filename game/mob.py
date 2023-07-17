@@ -33,19 +33,20 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.random_size = random.choice(asteroids)
-        rand_fact = randrange(75, 175) // 100
+        self.rand_fact = randrange(7, 17) / 10
         self.img_orig = random.choice(self.random_size[0])
         self.img_orig.set_colorkey(BLACK)
-        self.image = pygame.Surface((20, 20))
         width = self.img_orig.get_rect().width
         height = self.img_orig.get_rect().height
-        self.image = pygame.transform.scale(self.img_orig, (height * rand_fact, width * rand_fact))
+        self.base_image = pygame.transform.scale(self.img_orig, (height * self.rand_fact, width * self.rand_fact))
+        self.image = self.base_image
+        self.image = pygame.Surface((20, 20))
         self.rect = self.image.get_rect()
         self.radius = int((randrange(9, 11) / 10) * self.rect.width / 2)
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.x = randrange(WIDTH - self.rect.width)
-        self.rect.y = randrange(-100, -30)
+        self.rect.y = randrange(-100,-50)
         if self.random_size[0] == meteor_images_l:
             self.speed_y = randrange(1, 3)
             self.speed_x = randrange(-1, 1)
@@ -77,7 +78,7 @@ class Mob(pygame.sprite.Sprite):
         if now - self.last_update > 40:
             self.last_update = now
             self.rot = (self.rot + self.rot_speed) % 360
-            new_image = pygame.transform.rotate(self.img_orig, self.rot)
+            new_image = pygame.transform.rotate(self.base_image, self.rot)
             old_centre = self.rect.center
             self.image = new_image
             self.rect = self.image.get_rect()
