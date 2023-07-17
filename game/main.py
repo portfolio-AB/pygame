@@ -17,7 +17,9 @@ WHITE = (250, 250, 250)
 BAR_LENGTH = 180
 BAR_HEIGHT = 15
 LIFE_SIDES = 20
+POPULATION = 8
 score = 0
+prev_score = 0
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -34,6 +36,8 @@ def shoot(pl):
     if now - pl.last_shot > pl.shoot_delay:
         pl.last_shot = now
         if pl.pow_bullets > 0 and pl.bull_type == 1:
+            pow_shoot_snd.play()
+            print(111)
             projectile = Projectile(pl.rect.centerx, pl.rect.top, "Blue")
             projectiles.add(projectile)
             sprites.add(projectile)
@@ -42,8 +46,9 @@ def shoot(pl):
             projectile = Projectile(pl.rect.centerx, pl.rect.top)
             projectiles.add(projectile)
             sprites.add(projectile)
+            shoot_snd.play()
 
-        shoot_snd.play()
+        pow_shoot_snd.play()
 
 
 font_name = pygame.font.match_font("arial")
@@ -118,6 +123,7 @@ pow_img = pygame.transform.scale(pow_projectile_img, (5, 10))
 pow_img.set_colorkey(BLACK)
 
 shoot_snd = pygame.mixer.Sound(path.join(snd_dir, "lazer.wav"))
+pow_shoot_snd = pygame.mixer.Sound(path.join(snd_dir, "pow_lazer.wav"))
 big_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit big.wav"))
 small_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit small.wav"))
 tiny_target_snd = pygame.mixer.Sound(path.join(snd_dir, "target hit tiny.wav"))
@@ -132,7 +138,7 @@ projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
 
-for _ in range(8):
+for _ in range(POPULATION):
     new_mob()
 
 running = True
@@ -151,6 +157,11 @@ while running:
                 shoot(player)
             if event.key == pygame.K_x:
                 player.bull_type *= -1
+    if len(mobs) < POPULATION:
+        new_mob()
+    if score - prev_score >= 100:
+        prev_score += 100
+        POPULATION += 1
 
     sprites.update()
     mobs.update()
@@ -173,10 +184,10 @@ while running:
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in hits:
         player.shield_health -= hit.radius
-        explosion = Explosion(hit.rect.center, "small")
+        explosion = Explosion(hit.rect.center, hit.random_size[1])
         sprites.add(explosion)
         if player.shield_health <= 0:
-            explosion = Explosion(player.rect.center, "lrg")
+            explosion = Explosion(player.rect.center, "death")
             sprites.add(explosion)
             player.hide()
             player.lives -= 1
@@ -185,11 +196,9 @@ while running:
             t = Timer(0.90, stop_game)
             t.start()
 
-        new_mob()
-
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
     for i in group_hits:
-        hit_num = random.randint(1, 1)
+        hit_num = random.randint(1, 5)
         size = "small"
 
         if i.radius <= 10:
@@ -207,8 +216,7 @@ while running:
                 i.health -= 75
         if i.health <= 0:
             i.kill()
-            new_mob()
-            score += i.radius
+            score += (i.radius + i.init_health) // 2
             if hit_num == 1:
                 boost = Boost(i.rect.center)
                 boosts.add(boost)

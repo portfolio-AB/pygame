@@ -36,11 +36,13 @@ class Explosion(pygame.sprite.Sprite):
                 self.rect.center = centre
 
 
-explosion_anim = {"lrg": [], "med": [], "small": []}
+explosion_anim = {"death": [], "lrg": [], "med": [], "small": []}
 for i in range(9):
     file_name = "regularExplosion0{}.png".format(i)
     image = pygame.image.load(path.join(exp_dir, file_name)).convert()
     image.set_colorkey(BLACK)
+    img_death = pygame.transform.scale(image, (85, 85))
+    explosion_anim["death"].append(img_death)
     img_lrg = pygame.transform.scale(image, (75, 75))
     explosion_anim["lrg"].append(img_lrg)
     img_med = pygame.transform.scale(image, (45, 45))

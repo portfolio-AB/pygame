@@ -15,10 +15,11 @@ img_dir = path.join(path.dirname(__file__), "img")
 meteor_images_l = []
 meteor_images_m = []
 meteor_images_s = []
-meteor_list_l = ["meteorGrey_big1.png", "meteorGrey_big4.png"]
-meteor_list_m = ["meteorGrey_med2.png", "meteorGrey_med2.png"]
-meteor_list_s = ["meteorGrey_small1.png", "meteorGrey_tiny2.png"]
-asteroids = [meteor_images_l, meteor_images_m, meteor_images_s ]
+meteor_list_l = ["meteorGrey_big1.png", "meteorGrey_big2.png", "meteorGrey_big3.png", "meteorGrey_big4.png",
+                 "meteorBrown_big1.png"]
+meteor_list_m = ["meteorGrey_med1.png", "meteorGrey_med2.png", "meteorBrown_med1.png", "meteorBrown_med3.png"]
+meteor_list_s = ["meteorGrey_small1.png", "meteorGrey_small2.png", "meteorGrey_tiny1.png", "meteorGrey_tiny2.png"]
+asteroids = [(meteor_images_l, "lrg"), (meteor_images_m, "med"), (meteor_images_s, "small")]
 
 for i in meteor_list_l:
     meteor_images_l.append(pygame.image.load(path.join(img_dir, i)).convert())
@@ -32,27 +33,32 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.random_size = random.choice(asteroids)
-        self.img_orig = random.choice(self.random_size)
+        rand_fact = randrange(75, 175) // 100
+        self.img_orig = random.choice(self.random_size[0])
         self.img_orig.set_colorkey(BLACK)
         self.image = pygame.Surface((20, 20))
-        self.image = self.img_orig.copy()
+        width = self.img_orig.get_rect().width
+        height = self.img_orig.get_rect().height
+        self.image = pygame.transform.scale(self.img_orig, (height * rand_fact, width * rand_fact))
+        self.rect = self.image.get_rect()
+        self.radius = int((randrange(9, 11) / 10) * self.rect.width / 2)
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
-        self.radius = int(0.9 * self.rect.width / 2)
         self.rect.x = randrange(WIDTH - self.rect.width)
         self.rect.y = randrange(-100, -30)
-        if self.random_size == meteor_images_l:
+        if self.random_size[0] == meteor_images_l:
             self.speed_y = randrange(1, 3)
             self.speed_x = randrange(-1, 1)
-            self.health = 75
-        elif self.random_size == meteor_images_m:
+            self.init_health = randrange(75, 100)
+        elif self.random_size[0] == meteor_images_m:
             self.speed_y = randrange(1, 4)
             self.speed_x = randrange(-1, 1)
-            self.health = 50
+            self.init_health = randrange(45, 55)
         else:
             self.speed_y = randrange(2, 5)
             self.speed_x = randrange(-1, 1)
-            self.health = 25
+            self.init_health = randrange(10, 25)
+        self.health = self.init_health
         self.rot = 0
         self.rot_speed = randrange(-5, 5)
         self.last_update = pygame.time.get_ticks()
@@ -62,10 +68,7 @@ class Mob(pygame.sprite.Sprite):
         self.rect.x += self.speed_x
 
         if self.rect.top > HEIGHT or self.rect.left > WIDTH or self.rect.right < 0:
-            self.rect.x = randrange(WIDTH - self.rect.width)
-            self.rect.y = randrange(-100, -30)
-            self.speed_y = randrange(1, 5)
-            self.speed_x = randrange(-1, 1)
+            self.kill()
 
         self.rotate()
 
