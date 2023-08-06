@@ -18,8 +18,11 @@ BAR_LENGTH = 180
 BAR_HEIGHT = 15
 LIFE_SIDES = 20
 POPULATION = 8
-score = 0
-prev_score = 0
+SCORE = 0
+LEVEL = 1
+SPAWN_RATE = 4_000
+IS_SPAWN_AVAILABLE = True
+
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -28,6 +31,7 @@ clock = pygame.time.Clock()
 
 img_dir = path.join(path.dirname(__file__), "img")
 snd_dir = path.join(path.dirname(__file__), "snd")
+bg_dir = path.join(img_dir, "backgrounds")
 
 
 def shoot(pl):
@@ -71,6 +75,7 @@ def new_mob():
     mob = Mob()
     mobs.add(mob)
     sprites.add(mob)
+    mob.level = LEVEL
 
 
 def draw_shield_bar(surf, x, y, pct):
@@ -90,7 +95,7 @@ def draw_shield_bar(surf, x, y, pct):
 
     fill_rect.center = (x, y)
     outline_rect.center = (x, y)
-    extra_rect.center = (x, y + 20)
+    extra_rect.center = (x, y + 25)
 
     pygame.draw.rect(surf, WHITE, outline_rect)
     pygame.draw.rect(surf, (175, 35, 100), fill_rect)
@@ -113,9 +118,18 @@ def draw_ultra_bullets(surf, x, y, quant, img):
         surf.blit(img, ultra_bullet)
 
 
-bg = pygame.image.load(path.join(img_dir, "darkPurple.png")).convert()
-bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-bg_rect = bg.get_rect()
+def population_increase(val):
+    global POPULATION
+    POPULATION += val
+    print(POPULATION)
+
+
+lvl_bg = []
+for i in range(6):
+    bg = pygame.image.load(path.join(bg_dir, f"background_lvl{i + 1}.png")).convert()
+    bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
+    lvl_bg.append(bg)
+bg_rect = lvl_bg[0].get_rect()
 
 lives_img = pygame.transform.scale(player_img, (30, 30))
 lives_img.set_colorkey(BLACK)
@@ -138,6 +152,8 @@ projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
 
+population_event = pygame.USEREVENT+1
+
 for _ in range(POPULATION):
     new_mob()
 
@@ -146,8 +162,11 @@ while running:
     clock.tick(FPS)
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or score >= 1500:
+        if event.type == pygame.QUIT or SCORE >= 1500:
             running = False
+        if event.type == population_event:
+            population_increase(1)
+            IS_SPAWN_AVAILABLE = True
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 player.speed_x = -10
@@ -159,9 +178,15 @@ while running:
                 player.bull_type *= -1
     if len(mobs) < POPULATION:
         new_mob()
-    if score - prev_score >= 100:
-        prev_score += 100
-        POPULATION += 1
+    if LEVEL < 6:
+        if SCORE >= 100:
+            LEVEL += 1
+            population_increase(1)
+            SCORE = 0
+    else:
+        if IS_SPAWN_AVAILABLE:
+            IS_SPAWN_AVAILABLE = False
+            pygame.time.set_timer(population_event, SPAWN_RATE)
 
     sprites.update()
     mobs.update()
@@ -216,7 +241,7 @@ while running:
                 i.health -= 75
         if i.health <= 0:
             i.kill()
-            score += (i.radius + int(i.init_health)) // 2
+            SCORE += (i.radius + int(i.init_health)) // 2
             if hit_num == 1:
                 boost = Boost(i.rect.center)
                 boosts.add(boost)
@@ -226,10 +251,11 @@ while running:
         sprites.add(explosion)
 
     screen.fill(BLACK)
-    screen.blit(bg, bg_rect)
+    screen.blit(lvl_bg[LEVEL-1], bg_rect)
 
     sprites.draw(screen)
-    draw_text(screen, str(score), 20, WIDTH // 2, 20)
+    draw_text(screen, str(SCORE), 20, WIDTH // 2, 20)
+    draw_text(screen, "LVL:" + str(LEVEL), 20, WIDTH // 2, 45)
     draw_shield_bar(screen, WIDTH - 100, 30, player.shield_health)
     draw_lives(screen, 30, 20, player.lives, lives_img)
     draw_ultra_bullets(screen, 35, 60, player.pow_bullets, pow_img)
