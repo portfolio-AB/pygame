@@ -47,16 +47,17 @@ class Mob(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = randrange(WIDTH - self.rect.width)
         self.rect.y = randrange(-100, -50)
+        self.level = 1
         if self.random_size[0] == meteor_images_l:
-            self.speed_y = randrange(1, 3)
+            self.speed_y = randrange(1, 1 + (1 + self.level // 3))
             self.speed_x = randrange(-1, 1)
             self.init_health = 100 * self.rand_fact
         elif self.random_size[0] == meteor_images_m:
-            self.speed_y = randrange(1, 4)
+            self.speed_y = randrange(1, 2 + (self.level // 2))
             self.speed_x = randrange(-1, 1)
             self.init_health = 50 * self.rand_fact
         else:
-            self.speed_y = randrange(2, 5)
+            self.speed_y = randrange(1, 3 + self.level)
             self.speed_x = randrange(-1, 1)
             self.init_health = 30 * self.rand_fact
         self.health = self.init_health
