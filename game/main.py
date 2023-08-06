@@ -17,11 +17,12 @@ WHITE = (250, 250, 250)
 BAR_LENGTH = 180
 BAR_HEIGHT = 15
 LIFE_SIDES = 20
-POPULATION = 4
+POPULATION = 8
 SCORE = 0
 LEVEL = 1
-SPAWN_RATE = 10_000
+SPAWN_RATE = 4_000
 IS_SPAWN_AVAILABLE = True
+
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -29,8 +30,8 @@ pygame.display.set_caption("test game")
 clock = pygame.time.Clock()
 
 img_dir = path.join(path.dirname(__file__), "img")
-bg_dir = path.join(img_dir, "backgrounds")
 snd_dir = path.join(path.dirname(__file__), "snd")
+bg_dir = path.join(img_dir, "backgrounds")
 
 
 def shoot(pl):
@@ -120,6 +121,7 @@ def draw_ultra_bullets(surf, x, y, quant, img):
 def population_increase(val):
     global POPULATION
     POPULATION += val
+    print(POPULATION)
 
 
 lvl_bg = []
@@ -150,6 +152,8 @@ projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
 
+population_event = pygame.USEREVENT+1
+
 for _ in range(POPULATION):
     new_mob()
 
@@ -160,6 +164,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or SCORE >= 1500:
             running = False
+        if event.type == population_event:
+            population_increase(1)
+            IS_SPAWN_AVAILABLE = True
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 player.speed_x = -10
@@ -171,7 +178,6 @@ while running:
                 player.bull_type *= -1
     if len(mobs) < POPULATION:
         new_mob()
-
     if LEVEL < 6:
         if SCORE >= 100:
             LEVEL += 1
@@ -180,74 +186,74 @@ while running:
     else:
         if IS_SPAWN_AVAILABLE:
             IS_SPAWN_AVAILABLE = False
-            pygame.time.set_timer(population_increase(1), SPAWN_RATE)
+            pygame.time.set_timer(population_event, SPAWN_RATE)
 
-            sprites.update()
-            mobs.update()
-            projectiles.update()
+    sprites.update()
+    mobs.update()
+    projectiles.update()
 
-            boost_gain = pygame.sprite.spritecollide(player, boosts, True, pygame.sprite.collide_circle)
-            for b in boost_gain:
-                if b.type == "bolt":
-                    if player.pow_bullets < 10:
-                        player.pow_bullets += 1
-                if b.type == "shield":
-                    if player.lives == 3:
-                        if player.shield_health >= 50:
-                            player.shield_health += 200 - player.shield_health
-                        else:
-                            player.shield_health = 100
-                    elif player.lives < 3:
-                        player.lives += 1
-
-            hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
-            for hit in hits:
-                player.shield_health -= hit.radius
-                explosion = Explosion(hit.rect.center, hit.random_size[1])
-                sprites.add(explosion)
-                if player.shield_health <= 0:
-                    explosion = Explosion(player.rect.center, "death")
-                    sprites.add(explosion)
-                    player.hide()
-                    player.lives -= 1
-                    player.shield_health = 100
-                if player.lives == 0:
-                    t = Timer(0.90, stop_game)
-                    t.start()
-
-            group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
-            for i in group_hits:
-                hit_num = random.randint(1, 5)
-                size = "small"
-
-                if i.radius <= 10:
-                    tiny_target_snd.play()
-                elif 10 < i.radius <= 20:
-                    size = "med"
-                    small_target_snd.play()
+    boost_gain = pygame.sprite.spritecollide(player, boosts, True, pygame.sprite.collide_circle)
+    for b in boost_gain:
+        if b.type == "bolt":
+            if player.pow_bullets < 10:
+                player.pow_bullets += 1
+        if b.type == "shield":
+            if player.lives == 3:
+                if player.shield_health >= 50:
+                    player.shield_health += 200 - player.shield_health
                 else:
-                    size = "lrg"
-                    big_target_snd.play()
-                for k in group_hits[i]:
-                    if k.type == "Red":
-                        i.health -= 25
-                    else:
-                        i.health -= 75
-                if i.health <= 0:
-                    i.kill()
-                    SCORE += (i.radius + int(i.init_health)) // 2
-                    if hit_num == 1:
-                        boost = Boost(i.rect.center)
-                        boosts.add(boost)
-                        sprites.add(boost)
+                    player.shield_health = 100
+            elif player.lives < 3:
+                player.lives += 1
 
-                explosion = Explosion(i.rect.center, size)
-                sprites.add(explosion)
+    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
+    for hit in hits:
+        player.shield_health -= hit.radius
+        explosion = Explosion(hit.rect.center, hit.random_size[1])
+        sprites.add(explosion)
+        if player.shield_health <= 0:
+            explosion = Explosion(player.rect.center, "death")
+            sprites.add(explosion)
+            player.hide()
+            player.lives -= 1
+            player.shield_health = 100
+        if player.lives == 0:
+            t = Timer(0.90, stop_game)
+            t.start()
+
+    group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
+    for i in group_hits:
+        hit_num = random.randint(1, 5)
+        size = "small"
+
+        if i.radius <= 10:
+            tiny_target_snd.play()
+        elif 10 < i.radius <= 20:
+            size = "med"
+            small_target_snd.play()
+        else:
+            size = "lrg"
+            big_target_snd.play()
+        for k in group_hits[i]:
+            if k.type == "Red":
+                i.health -= 25
+            else:
+                i.health -= 75
+        if i.health <= 0:
+            i.kill()
+            SCORE += (i.radius + int(i.init_health)) // 2
+            if hit_num == 1:
+                boost = Boost(i.rect.center)
+                boosts.add(boost)
+                sprites.add(boost)
+
+        explosion = Explosion(i.rect.center, size)
+        sprites.add(explosion)
 
     screen.fill(BLACK)
     screen.blit(lvl_bg[LEVEL-1], bg_rect)
-    sprites.draw(screen)
 
+    sprites.draw(screen)
     draw_text(screen, str(SCORE), 20, WIDTH // 2, 20)
     draw_text(screen, "LVL:" + str(LEVEL), 20, WIDTH // 2, 45)
     draw_shield_bar(screen, WIDTH - 100, 30, player.shield_health)
@@ -255,4 +261,4 @@ while running:
     draw_ultra_bullets(screen, 35, 60, player.pow_bullets, pow_img)
     pygame.display.flip()
 
-    pygame.quit()
+pygame.quit()
