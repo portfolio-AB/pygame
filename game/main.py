@@ -129,6 +129,8 @@ for i in range(6):
     lvl_bg.append(bg)
 bg_rect = lvl_bg[0].get_rect()
 
+game_over_screen = pygame.image.load(path.join(bg_dir, f"background_lvl{i + 1}.png")).convert()
+
 lives_img = pygame.transform.scale(player_img, (30, 30))
 lives_img.set_colorkey(BLACK)
 pow_img = pygame.transform.scale(pow_projectile_img, (5, 10))
@@ -206,7 +208,7 @@ while running:
 
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in hits:
-        player.shield_health -= hit.radius
+        player.shield_health -= hit.radius * 3
         explosion = Explosion(hit.rect.center, hit.random_size[1])
         sprites.add(explosion)
         if player.shield_health <= 0:
