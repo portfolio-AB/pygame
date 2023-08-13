@@ -41,7 +41,6 @@ def shoot(pl):
         pl.last_shot = now
         if pl.pow_bullets > 0 and pl.bull_type == 1:
             pow_shoot_snd.play()
-            print(111)
             projectile = Projectile(pl.rect.centerx, pl.rect.top, "Blue")
             projectiles.add(projectile)
             sprites.add(projectile)
@@ -121,7 +120,6 @@ def draw_ultra_bullets(surf, x, y, quant, img):
 def population_increase(val):
     global POPULATION
     POPULATION += val
-    print(POPULATION)
 
 
 lvl_bg = []
