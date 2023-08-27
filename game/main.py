@@ -22,7 +22,7 @@ SCORE = 0
 LEVEL = 1
 SPAWN_RATE = 4_000
 IS_SPAWN_AVAILABLE = True
-
+GAME_OVER = False
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -32,6 +32,8 @@ clock = pygame.time.Clock()
 img_dir = path.join(path.dirname(__file__), "img")
 snd_dir = path.join(path.dirname(__file__), "snd")
 bg_dir = path.join(img_dir, "backgrounds")
+
+font_name = pygame.font.match_font("arial")
 
 
 def shoot(pl):
@@ -52,9 +54,6 @@ def shoot(pl):
             shoot_snd.play()
 
         pow_shoot_snd.play()
-
-
-font_name = pygame.font.match_font("arial")
 
 
 def stop_game():
@@ -117,6 +116,13 @@ def draw_ultra_bullets(surf, x, y, quant, img):
         surf.blit(img, ultra_bullet)
 
 
+def draw_game_over(surf, x, y, img):
+    game_over = img.get_rect()
+    game_over.y = y
+    game_over.x = x
+    surf.blit(img, game_over)
+
+
 def population_increase(val):
     global POPULATION
     POPULATION += val
@@ -129,7 +135,8 @@ for i in range(6):
     lvl_bg.append(bg)
 bg_rect = lvl_bg[0].get_rect()
 
-game_over_screen = pygame.image.load(path.join(bg_dir, f"background_lvl{i + 1}.png")).convert()
+game_over_img = pygame.image.load(path.join(img_dir, "game_over_screen.png")).convert()
+game_over_title = pygame.transform.scale(game_over_img, (WIDTH, 250))
 
 lives_img = pygame.transform.scale(player_img, (30, 30))
 lives_img.set_colorkey(BLACK)
@@ -152,7 +159,7 @@ projectiles = pygame.sprite.Group()
 player = Player()
 sprites.add(player)
 
-population_event = pygame.USEREVENT+1
+population_event = pygame.USEREVENT + 1
 
 for _ in range(POPULATION):
     new_mob()
@@ -160,6 +167,10 @@ for _ in range(POPULATION):
 running = True
 while running:
     clock.tick(FPS)
+
+    sprites.update()
+    mobs.update()
+    projectiles.update()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT or SCORE >= 1500:
@@ -188,10 +199,6 @@ while running:
             IS_SPAWN_AVAILABLE = False
             pygame.time.set_timer(population_event, SPAWN_RATE)
 
-    sprites.update()
-    mobs.update()
-    projectiles.update()
-
     boost_gain = pygame.sprite.spritecollide(player, boosts, True, pygame.sprite.collide_circle)
     for b in boost_gain:
         if b.type == "bolt":
@@ -219,6 +226,7 @@ while running:
             player.shield_health = 100
         if player.lives == 0:
             t = Timer(0.90, stop_game)
+            GAME_OVER = True
             t.start()
 
     group_hits = pygame.sprite.groupcollide(mobs, projectiles, False, True)
@@ -251,7 +259,7 @@ while running:
         sprites.add(explosion)
 
     screen.fill(BLACK)
-    screen.blit(lvl_bg[LEVEL-1], bg_rect)
+    screen.blit(lvl_bg[LEVEL - 1], bg_rect)
 
     sprites.draw(screen)
     draw_text(screen, str(SCORE), 20, WIDTH // 2, 20)
@@ -259,6 +267,9 @@ while running:
     draw_shield_bar(screen, WIDTH - 100, 30, player.shield_health)
     draw_lives(screen, 30, 20, player.lives, lives_img)
     draw_ultra_bullets(screen, 35, 60, player.pow_bullets, pow_img)
+
+    if GAME_OVER:
+        draw_game_over(screen, 0, HEIGHT // 2 - 200, game_over_title)
     pygame.display.flip()
 
 pygame.quit()
