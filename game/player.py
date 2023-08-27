@@ -22,11 +22,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (WIDTH / 2, HEIGHT - 100)
         self.speed_x = 0
         self.rot = 0
-        self.sheild_health = 100
+        self.shield_health = 100
         self.shoot_delay = 250
         self.hidden = False
         self.hide_timer = pygame.time.get_ticks()
         self.lives = 3
+        self.pow_bullets = 0
+        self.bull_type = -1
         self.last_shot = pygame.time.get_ticks()
 
     def hide(self):
